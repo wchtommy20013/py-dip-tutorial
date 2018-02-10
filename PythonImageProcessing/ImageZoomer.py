@@ -12,7 +12,7 @@ class FullImageZoomer:
         img = Image.new( 'RGB', (self.image.size[0] * self.K, self.image.size[1] * self.K)) 
         pixels = img.load() 
         original_pixels = self.image.load()
-
+    
         for i in range(img.size[0]):
             for j in range(img.size[1]):
                 pixels[i,j] = original_pixels[i / self.K, j / self.K]
@@ -56,56 +56,40 @@ class FullImageZoomer:
         for i in range(self.image.size[0]):
             for j in range(self.image.size[1]):
                 pixels[i * self.K ,j * self.K] = original_pixels[i,j]
-                if i < self.image.size[0] - 1 or j < self.image.size[1] - 1:
+                if i < self.image.size[0] - 1: 
                     diffx = tuple_diff(original_pixels[i,j], original_pixels[i + 1, j])
-                    for p in range(1, self.K):
+                    for p in range(0, self.K):
                         if original_pixels[i,j] < original_pixels[i+1,j]:
-                            x_pt = i * self.K + p
+                          smallerx = original_pixels[i,j]
+                          x_pt = i * self.K + p
                         else:
-                            x_pt = (i + 1) * self.K + 1 - p
-                        pixels[x_pt, j * self.K] = tuple_add(original_pixels[i,j] ,tuple_div_mul(diffx, self.K, self.K - p - 1))
-                #diffx = tuple_diff(original_pixels[i,j], original_pixels[i - 1,j])
-                #for p in range(0, self.K):
-                #    if original_pixels[i,j] > original_pixels[i - 1, j]:
-                #        x_pt = i * self.K - p - 1
-                #    else:
-                #        x_pt = (i - 1) * self.K + p - 1
-                #    pixels[x_pt, j * self.K] = tuple_add(original_pixels[i,j] ,tuple_div_mul(diffx, self.K, self.K - p - 1))
-                #    diffy = tuple_diff(pixels[x_pt, j * self.K], pixels[x_pt, (j - 1) * self.K])
-                #    for q in range(0, self.K):
-                #        if pixels[x_pt, j * self.K] > pixels[x_pt, (j - 1) * self.K]:
-                #            y_pt = j * self.K - q - 1
-                #        else:
-                #            y_pt = (j - 1) * self.K + q - 1
-                #        pixels[x_pt, y_pt] = tuple_add(pixels[x_pt, y_pt] ,tuple_div_mul(diffy, self.K, self.K - q - 1))
+                          smallerx = original_pixels[i + 1,j]
+                          x_pt = (i + 1) * self.K - p
+                        if p in range(1, self.K):
+                            pixels[x_pt, j * self.K] = tuple_add(smallerx ,tuple_div_mul(diffx, self.K, self.K - p - 1))
+                        
+                        if j > 0 :
+                            diffy = tuple_diff(pixels[x_pt,j * self.K], pixels[x_pt, (j-1) * self.K])
+                            for q in range(1, self.K):
+                                if pixels[x_pt,j * self.K] < pixels[x_pt, (j-1) * self.K]:
+                                    smallery = pixels[x_pt,j * self.K]
+                                    y_pt = j * self.K - q
+                                else:
+                                    smallery = pixels[x_pt, (j-1) * self.K]
+                                    y_pt = (j - 1) * self.K + q
+                                pixels[x_pt, y_pt] = tuple_add(smallery, tuple_div_mul(diffy, self.K, self.K-q-1 ))
+                elif j > 0:
+                    
+                    diffy = tuple_diff(original_pixels[i,j], original_pixels[i, j-1])
+                    for q in range(1, self.K):
+                        if original_pixels[i,j] < original_pixels[i, j-1]:
+                            smallery = original_pixels[i, j]
+                            y_pt = j * self.K - q
+                        else:
+                            smallery = original_pixels[i, j-1]
+                            y_pt = (j - 1) * self.K + q
+                        pixels[i * self.K, y_pt] = tuple_add(smallery, tuple_div_mul(diffy, self.K, self.K-q-1 ))
 
-        #for i in range(self.image.size[0]):
-        #    for j in range(self.image.size[1]):
-        #        if i < self.image.size[0] - 1:
-        #            pixels[i * self.K ,j * self.K] = original_pixels[i,j]
-        #            if j > 0:
-        #                diffy = tuple_diff(original_pixels[i,j], original_pixels[i,j - 1])
-        #            diffx = tuple_diff(original_pixels[i,j], original_pixels[i + 1,j])
-        #            if original_pixels[i,j] < original_pixels[i + 1,j]:
-        #                for p in range(1, self.K):
-        #                    pixels[i * self.K + p, j * self.K] = tuple_add(original_pixels[i,j] ,tuple_div(diffx, self.K))
-        #            else:
-        #                for p in reversed(range(1, self.K)):
-        #                    pixels[i * self.K + p, j * self.K] = tuple_add(original_pixels[i + 1,j] ,tuple_div(diffx, self.K))
-        #        else:
-        #            pixels[i * self.K, j * self.K] = original_pixels[i,j]
-
-        ##Column-wise operation
-        #for i in range(img.size[0]):
-        #    for j in range(0, img.size[1] - self.K , self.K - 1):
-        #        print(i, j)
-        #        diff = tuple_diff(pixels[i,j], pixels[i,j + self.K])
-        #        if pixels[i,j] < pixels[i, j + self.K]:
-        #            for k in range(1, self.K):
-        #                pixels[i, j + k] = tuple_add(pixels[i,j] ,tuple_div(diff, self.K))
-        #        else:
-        #            for k in reversed(range(1, self.K)):
-        #                pixels[i , j + k] = tuple_add(pixels[i,j + self.K] ,tuple_div(diff, self.K))
         self.image = img
 
 def is_power_of_two(num):
